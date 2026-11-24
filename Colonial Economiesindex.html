@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Changing Economies of the 13 Colonies (1585–1776)</title>
+  <style>
+    :root {
+      --bg-dark: #0b1322;
+      --bg-panel: #152033;
+      --bg-card: #1e2c44;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-primary: #34d399;
+      --accent-colonial: #f59e0b;
+      --accent-site: #f43f5e;
+      --border-color: #2d3e59;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: linear-gradient(180deg, #070d17 0%, var(--bg-dark) 100%);
+      padding: 0.85rem 1.4rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .title-group h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #f8fafc;
+    }
+
+    .title-group p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+      font-size: 0.78rem;
+      background: var(--bg-panel);
+      padding: 0.45rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dot.african {
+      background-color: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-primary);
+    }
+
+    .dot.colonial {
+      background-color: rgba(245, 158, 11, 0.75);
+      border: 1px solid #fbbf24;
+      border-radius: 3px;
+    }
+
+    .dot.event {
+      background-color: var(--accent-site);
+      box-shadow: 0 0 8px var(--accent-site);
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      min-height: 0;
+    }
+
+    @media (max-width: 960px) {
+      main {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .map-stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: #0a1628;
+      border-right: 1px solid var(--border-color);
+      min-height: 620px;
+    }
+
+    .canvas-container {
+      position: relative;
+      flex: 0 0 auto;
+      width: 100%;
+      height: clamp(600px, 82vh, 850px);
+      min-height: 600px;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .year-overlay {
+      position: absolute;
+      top: 1rem;
+      left: 1.15rem;
+      pointer-events: none;
+      background: rgba(11, 19, 34, 0.82);
+      backdrop-filter: blur(4px);
+      padding: 0.6rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid rgba(51, 65, 85, 0.75);
+    }
+
+    .year-display {
+      font-size: 2.75rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      color: #f8fafc;
+    }
+
+    .era-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent-primary);
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .map-toggles {
+      position: absolute;
+      bottom: 0.85rem;
+      left: 1.15rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      z-index: 10;
+    }
+
+    .toggle-pill {
+      background: rgba(21, 32, 51, 0.92);
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.15s;
+    }
+
+    .toggle-pill.active {
+      background: rgba(52, 211, 153, 0.18);
+      border-color: #34d399;
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: rgba(11, 19, 34, 0.96);
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.8rem;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, -115%);
+      transition: opacity 0.15s ease;
+      z-index: 25;
+      min-width: 215px;
+      max-width: 275px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    }
+
+    .tooltip h4 {
+      color: #f8fafc;
+      font-size: 0.88rem;
+      margin-bottom: 0.3rem;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 0.25rem;
+    }
+
+    .tooltip p {
+      color: #cbd5e1;
+      margin: 0.2rem 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .tooltip span.val {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .timeline-controls {
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border-color);
+      padding: 0.9rem 1.35rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .controls-top {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    button.ctrl-btn {
+      background: #283852;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 0.48rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.83rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background 0.15s;
+    }
+
+    button.ctrl-btn:hover {
+      background: #364b6e;
+    }
+
+    button.ctrl-btn.primary {
+      background: #059669;
+      border-color: #34d399;
+    }
+
+    button.ctrl-btn.primary:hover {
+      background: #047857;
+    }
+
+    .slider-wrap {
+      flex: 1;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-primary);
+      cursor: pointer;
+      height: 6px;
+    }
+
+    .milestones {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.35rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .milestone-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.73rem;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    .milestone-btn:hover, .milestone-btn.active {
+      color: var(--accent-primary);
+      background: rgba(52, 211, 153, 0.14);
+      font-weight: 600;
+    }
+
+    .sidebar {
+      background: var(--bg-panel);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      overflow-y: auto;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+
+    .stat-card .label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .stat-card .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 0.18rem;
+    }
+
+    .stat-card .sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.16rem;
+    }
+
+    .val-afr { color: var(--accent-primary); }
+    .val-col { color: var(--accent-colonial); }
+
+    .narrative-box {
+      background: var(--bg-card);
+      border-left: 3px solid var(--accent-primary);
+      border-radius: 0 8px 8px 0;
+      padding: 0.85rem;
+    }
+
+    .narrative-box h3 {
+      font-size: 0.9rem;
+      margin-bottom: 0.32rem;
+      color: #f8fafc;
+    }
+
+    .narrative-box p {
+      font-size: 0.79rem;
+      line-height: 1.46;
+      color: #cbd5e1;
+    }
+
+    .region-bars {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.8rem;
+    }
+
+    .region-bars h4 {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .bar-row {
+      margin-bottom: 0.55rem;
+    }
+
+    .bar-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .bar-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .bar-track {
+      height: 6px;
+      background: #0b1322;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #059669, #34d399);
+      border-radius: 4px;
+      transition: width 0.2s ease;
+    }
+
+    .methodology-note {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.65rem;
+    }
+  
+    main {grid-template-columns: minmax(0,1fr) 330px;}
+    .map-stage {min-width:0;}
+    .canvas-container {flex:1 1 0; min-height: max(620px, 76vh);}
+    canvas {position:absolute; inset:0; touch-action:none; cursor:grab;}
+    canvas.dragging {cursor:grabbing;}
+    .view-controls {display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:var(--bg-panel); border-bottom:1px solid var(--border-color);}
+    .view-controls button {padding:6px 10px;}
+    main.hide-stats {grid-template-columns:minmax(0,1fr);}
+    main.hide-stats .sidebar {display:none;}
+    .map-stage:fullscreen, .map-stage.expanded {display:flex; width:100%; height:100%; min-height:0; background:#0a1628; overflow:auto;}
+    .map-stage.expanded {position:fixed; inset:0; z-index:1000;}
+    .map-stage:fullscreen .canvas-container, .map-stage.expanded .canvas-container {min-height:240px;}
+    .milestones {flex-wrap:wrap;}
+    @media(max-width:960px){main {grid-template-columns:minmax(0,1fr);}}
+    </style>
+</head>
+<body>
+  <header>
+    <div class="title-group">
+      <h1>The Changing Economies of the 13 Colonies (1585–1776)</h1>
+      <p>Explore trade, resources, labor and regional specialization.</p>
+    </div>
+    <div class="legend"><span style="color:#60a5fa">● New England</span><span style="color:#4ade80">● Middle</span><span style="color:#fb923c">● Southern</span><span>◌ Future colony</span><span style="color:#fda4af">● Economic milestone</span></div>
+</header>
+
+  <main>
+    <section class="map-stage">
+      <div class="view-controls" aria-label="Map navigation">
+        <button class="ctrl-btn" id="zoomIn" aria-label="Zoom in">＋ Zoom in</button>
+        <button class="ctrl-btn" id="zoomOut" aria-label="Zoom out">− Zoom out</button>
+        <button class="ctrl-btn" id="resetView">↺ Reset map view</button>
+        <button class="ctrl-btn" id="fullView">⛶ Full screen</button>
+        <button class="ctrl-btn" id="statsView" aria-expanded="true">Hide statistics</button>
+        <span id="zoomStatus" style="align-self:center;font-size:.8rem" aria-live="polite">100% · Drag to move</span>
+      </div>
+      <div class="legend" style="border-radius:0;justify-content:center" aria-label="Product icon legend"><span>🐟 Fish</span><span>⛵ Shipbuilding</span><span>🪵 Timber / naval stores</span><span>🌾 Grain</span><span>🐄 Livestock</span><span>🦫 Furs / hides</span><span>⚒️ Iron</span><span>🍃 Tobacco</span><span>🍚 Rice</span><span>🔵 Indigo</span><span>Approximate dates; zoom for detail.</span></div>
+      <div class="canvas-container" id="canvasContainer">
+        <canvas id="mapCanvas"></canvas>
+        <div class="year-overlay">
+          <div class="year-display" id="yearDisplay">1585</div>
+          <div class="era-label" id="eraLabel">Roanoke: early ventures</div>
+        </div>
+        <div class="map-toggles">
+          <button class="toggle-pill active" id="toggleBordersBtn">✓ 13 Colonies Borders</button>
+          <button class="toggle-pill active" id="toggleLabelsBtn">✓ Colony Names</button>
+          <button class="toggle-pill active" id="toggleProductsBtn">✓ Product icons</button>
+          <button class="toggle-pill active" id="toggleSitesBtn">✓ Economic Sites</button>
+        </div>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+
+      <div class="timeline-controls">
+        <div class="controls-top">
+          <button class="ctrl-btn primary" id="playPauseBtn">▶ Play Time-Lapse</button>
+          <button class="ctrl-btn" id="resetBtn">↺ Reset (1585)</button>
+          <button class="ctrl-btn" id="speedBtn">Speed: 1x</button>
+          <div class="slider-wrap">
+            <input type="range" id="yearSlider" min="1585" max="1776" value="1585" step="1" />
+            <div class="milestones"><button class="milestone-btn" data-year="1585">1585 Roanoke</button><button class="milestone-btn" data-year="1612">1612 Tobacco</button><button class="milestone-btn" data-year="1650">1650 Colonial trade</button><button class="milestone-btn" data-year="1690">1690 Rice</button><button class="milestone-btn" data-year="1733">1733 Georgia</button><button class="milestone-btn" data-year="1776">1776 Independence</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="sidebar"><div class="stat-grid"><div class="stat-card"><div class="label">Established settlements / colonies</div><div class="value" id="count"></div><div class="sub">Of the future 13</div></div><div class="stat-card"><div class="label">Economic focus</div><div class="value" style="font-size:1rem" id="focus"></div></div></div><div class="narrative-box"><h3 id="eraTitle"></h3><p id="eraDesc"></p></div><div id="regionBarsContainer"></div><div class="region-bars"><h4>Explore a colony</h4><select id="colSelect" style="width:100%;padding:8px;background:#152033;color:white"></select><p id="colDetail" style="font-size:.82rem;line-height:1.5;margin-top:8px"></p></div><div class="methodology-note">Qualitative timeline, not measured export totals. Colors show regions, not wealth. Dashed outlines show approximate later colony boundaries before settlement. Dates indicate selected milestones or settlement beginnings, not exact dates of legal establishment. Indigenous economies and trade existed before English colonization. Florida was not one of the 13 colonies.<br>Further reading: <a style="color:#93c5fd" href="https://www.loc.gov/classroom-materials/united-states-history-primary-source-timeline/colonial-settlement-1600-1763/">Library of Congress: Colonial Settlement</a>.</div></aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('mapCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvasContainer');
+    const tooltip = document.getElementById('tooltip');
+
+    const yearSlider = document.getElementById('yearSlider');
+    const yearDisplay = document.getElementById('yearDisplay');
+    const eraLabel = document.getElementById('eraLabel');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const speedBtn = document.getElementById('speedBtn');
+
+    let currentYear = 1585;
+    let isPlaying = false;
+    let speedMultiplier = 1;
+    let lastFrameTime = 0;
+    let hoveredItem = null;
+
+    let showBorders = true;
+    let showLabels = true;
+    let showSites = true;
+
+    document.getElementById('toggleBordersBtn').addEventListener('click', (e) => {
+      showBorders = !showBorders;
+      e.target.classList.toggle('active', showBorders);
+      e.target.textContent = (showBorders ? '✓ ' : '✕ ') + '13 Colonies Borders';
+      drawMap();
+    });
+
+    document.getElementById('toggleLabelsBtn').addEventListener('click', (e) => {
+      showLabels = !showLabels;
+      e.target.classList.toggle('active', showLabels);
+      e.target.textContent = (showLabels ? '✓ ' : '✕ ') + 'Colony Names';
+      drawMap();
+    });
+
+    document.getElementById('toggleSitesBtn').addEventListener('click', (e) => {
+      showSites = !showSites;
+      e.target.classList.toggle('active', showSites);
+      e.target.textContent = (showSites ? '✓ ' : '✕ ') + 'Economic Sites';
+      drawMap();
+    });
+
+    // Exact Eastern Seaboard Geographic Framing matching the Indigenous Population Map
+    const GEO = {
+      minLon: -86.5,
+      maxLon: -65.2,
+      minLat: 24.0,
+      maxLat: 48.0
+    };
+
+    function project(lon, lat, bounds) {
+      const xNorm = (lon - GEO.minLon) / (GEO.maxLon - GEO.minLon);
+      const latRad = (lat * Math.PI) / 180;
+      const minLatRad = (GEO.minLat * Math.PI) / 180;
+      const maxLatRad = (GEO.maxLat * Math.PI) / 180;
+      const mercY = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+      const minMercY = Math.log(Math.tan(Math.PI / 4 + minLatRad / 2));
+      const maxMercY = Math.log(Math.tan(Math.PI / 4 + maxLatRad / 2));
+      const yNorm = 1 - (mercY - minMercY) / (maxMercY - minMercY);
+
+      return [
+        bounds.offsetX + xNorm * bounds.mapW,
+        bounds.offsetY + yNorm * bounds.mapH
+      ];
+    }
+
+    let zoom = 1, panX = 0, panY = 0;
+    function getMapBounds(w, h) {
+      const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+      const targetAspect = ((GEO.maxLon - GEO.minLon) * Math.PI / 180) / (merc(GEO.maxLat) - merc(GEO.minLat));
+      let mapW = Math.max(1, w - 32);
+      let mapH = Math.max(1, h - 145);
+      if (mapW / mapH > targetAspect) {
+        mapW = mapH * targetAspect;
+      } else {
+        mapH = mapW / targetAspect;
+      }
+      return {
+        mapW: mapW * zoom,
+        mapH: mapH * zoom,
+        offsetX: (w - mapW * zoom) / 2 + panX,
+        offsetY: 85 + (h - 145 - mapH * zoom) / 2 + panY
+      };
+    }
+
+    // Surrounding North American Landmass (Canada, Midwest, Florida)
+    const surroundingLandmass = [
+      [
+        [-84.0, 47.4], [-65.2, 47.4], [-65.2, 44.5], [-67.1, 45.1], [-69.2, 47.4],
+        [-71.5, 45.0], [-74.8, 45.0], [-76.2, 44.1], [-79.1, 43.3], [-82.5, 42.3],
+        [-83.5, 46.0], [-84.0, 47.4]
+      ],
+      [
+        [-86.5, 47.4], [-84.0, 47.4], [-83.5, 46.0], [-82.5, 42.3], [-79.1, 43.3],
+        [-79.8, 42.0], [-80.5, 39.7], [-81.9, 38.9], [-82.6, 37.5], [-84.2, 36.0],
+        [-85.5, 35.0], [-86.5, 30.3], [-86.5, 47.4]
+      ],
+      [
+        [-86.5, 30.3], [-85.0, 30.8], [-82.0, 30.4], [-81.4, 30.7], [-81.0, 29.0],
+        [-80.5, 27.8], [-80.1, 26.0], [-80.4, 25.2], [-81.1, 25.1], [-81.7, 26.0],
+        [-82.7, 27.8], [-82.8, 28.8], [-83.7, 29.8], [-84.9, 29.7], [-85.5, 30.0], [-86.5, 30.3]
+      ]
+    ];
+
+    // Great Lakes Polygons
+    const greatLakesGeo = [
+      [[-84.6, 46.2], [-80.0, 45.2], [-82.4, 43.0], [-83.8, 44.0]],
+      [[-83.4, 41.7], [-78.9, 42.9], [-79.2, 42.2], [-82.8, 41.4]],
+      [[-79.7, 43.3], [-76.1, 44.1], [-76.3, 43.5], [-79.4, 43.2]]
+    ];
+
+    // All 13 Original Colonies with Detailed Eastern Seaboard Coastlines, Distinct Borders, and 1776 African American Population Estimates
+    const thirteenColonies = [
+      {
+        id: 'NH',
+        name: 'New Hampshire',
+        shortName: 'New Hampshire',
+        founded: 1623,
+        labelPos: [-71.65, 43.75],
+        coords: [
+          [-71.5, 45.0], [-71.0, 45.2], [-70.7, 43.1], [-71.2, 42.7],
+          [-72.5, 42.7], [-72.3, 43.6], [-71.5, 45.0]
+        ]
+      },
+      {
+        id: 'MA',
+        name: 'Massachusetts (incl. Maine)',
+        shortName: 'Massachusetts',
+        founded: 1620,
+        labelPos: [-72.35, 42.38],
+        secondLabelPos: [-69.1, 45.35],
+        secondLabelText: 'MA (Maine)',
+        coords: [
+          [-73.5, 42.7], [-71.2, 42.7], [-70.8, 42.8], [-71.05, 42.35], [-70.65, 41.95],
+          [-70.0, 41.7], [-70.05, 42.05], [-70.3, 41.7], [-70.9, 41.5], [-71.4, 42.0],
+          [-73.5, 42.0], [-73.5, 42.7]
+        ],
+        extraCoords: [
+          [-71.0, 45.2], [-69.2, 47.2], [-67.8, 47.0], [-67.0, 44.9], [-68.1, 44.4],
+          [-68.9, 44.0], [-69.8, 43.8], [-70.25, 43.6], [-70.7, 43.1], [-71.0, 45.2]
+        ]
+      },
+      {
+        id: 'RI',
+        name: 'Rhode Island',
+        shortName: 'Rhode Island',
+        founded: 1636,
+        labelPos: [-68.9, 41.25],
+        leaderFrom: [-71.45, 41.65],
+        coords: [
+          [-71.8, 42.0], [-71.3, 42.0], [-71.1, 41.5], [-71.8, 41.3], [-71.8, 42.0]
+        ]
+      },
+      {
+        id: 'CT',
+        name: 'Connecticut',
+        shortName: 'Connecticut',
+        founded: 1636,
+        labelPos: [-71.0, 40.55],
+        leaderFrom: [-72.65, 41.55],
+        coords: [
+          [-73.5, 42.0], [-71.8, 42.0], [-71.8, 41.3], [-73.6, 41.0], [-73.5, 42.0]
+        ]
+      },
+      {
+        id: 'NY',
+        name: 'New York',
+        founded: 1624,
+        labelPos: [-75.1, 42.85],
+        coords: [
+          [-79.1, 43.3], [-76.2, 44.1], [-74.8, 45.0], [-73.3, 45.0], [-73.4, 43.6],
+          [-73.5, 42.7], [-73.5, 42.0], [-73.6, 41.0], [-74.0, 40.6], [-74.7, 41.4],
+          [-75.4, 42.0], [-79.8, 42.0], [-79.1, 43.3]
+        ],
+        extraCoords: [
+          [-74.0, 40.6], [-72.0, 41.05], [-72.3, 40.85], [-73.8, 40.58], [-74.0, 40.6]
+        ]
+      },
+      {
+        id: 'NJ',
+        name: 'New Jersey',
+        shortName: 'New Jersey',
+        founded: 1664,
+        labelPos: [-72.6, 39.65],
+        leaderFrom: [-74.45, 40.05],
+        coords: [
+          [-74.7, 41.4], [-73.9, 41.0], [-74.0, 40.4], [-74.3, 39.4], [-74.9, 38.95],
+          [-75.5, 39.6], [-75.1, 40.2], [-74.7, 41.4]
+        ]
+      },
+      {
+        id: 'PA',
+        name: 'Pennsylvania',
+        founded: 1681,
+        labelPos: [-77.8, 41.0],
+        coords: [
+          [-80.5, 42.0], [-75.4, 42.0], [-74.7, 41.4], [-75.1, 40.2], [-75.5, 39.7],
+          [-80.5, 39.7], [-80.5, 42.0]
+        ]
+      },
+      {
+        id: 'DE',
+        name: 'Delaware',
+        shortName: 'Delaware',
+        founded: 1638,
+        labelPos: [-73.2, 38.65],
+        leaderFrom: [-75.4, 38.9],
+        coords: [
+          [-75.7, 39.7], [-75.4, 39.7], [-75.05, 38.75], [-75.05, 38.45], [-75.7, 38.45], [-75.7, 39.7]
+        ]
+      },
+      {
+        id: 'MD',
+        name: 'Maryland',
+        shortName: 'Maryland',
+        founded: 1634,
+        labelPos: [-77.1, 39.35],
+        coords: [
+          [-79.5, 39.7], [-75.7, 39.7], [-75.7, 38.45], [-75.1, 38.0], [-76.0, 38.0],
+          [-76.35, 38.3], [-77.1, 38.9], [-78.3, 39.6], [-79.5, 39.7]
+        ]
+      },
+      {
+        id: 'VA',
+        name: 'Virginia',
+        founded: 1607,
+        labelPos: [-79.1, 37.6],
+        coords: [
+          [-80.5, 39.7], [-79.5, 39.7], [-78.3, 39.6], [-77.1, 38.9], [-76.3, 38.0],
+          [-76.25, 37.2], [-75.95, 36.85], [-75.85, 36.55], [-81.7, 36.55], [-82.6, 37.5],
+          [-81.9, 38.9], [-80.5, 39.7]
+        ],
+        extraCoords: [
+          [-75.7, 38.0], [-75.3, 37.95], [-75.95, 37.15], [-76.05, 37.35], [-75.7, 38.0]
+        ]
+      },
+      {
+        id: 'NC',
+        name: 'North Carolina',
+        founded: 1653,
+        labelPos: [-79.4, 35.75],
+        coords: [
+          [-84.2, 36.0], [-81.7, 36.55], [-75.85, 36.55], [-75.48, 35.25], [-76.4, 34.65],
+          [-77.9, 33.9], [-78.6, 33.9], [-80.8, 35.1], [-83.1, 35.0], [-84.2, 36.0]
+        ]
+      },
+      {
+        id: 'SC',
+        name: 'South Carolina',
+        founded: 1670,
+        labelPos: [-80.9, 33.85],
+        coords: [
+          [-83.1, 35.0], [-80.8, 35.1], [-78.6, 33.9], [-79.25, 33.25], [-80.8, 32.1],
+          [-82.0, 33.5], [-83.1, 35.0]
+        ]
+      },
+      {
+        id: 'GA',
+        name: 'Georgia',
+        founded: 1733,
+        labelPos: [-83.2, 32.45],
+        coords: [
+          [-85.5, 35.0], [-83.1, 35.0], [-82.0, 33.5], [-80.8, 32.1], [-81.35, 31.1],
+          [-81.4, 30.7], [-82.0, 30.4], [-85.0, 30.8], [-85.5, 35.0]
+        ]
+      }
+    ];
+
+    // Regional African American Population Clusters (U.S. Census Series Z 1–19)
+    const historicSites = [{name:'Roanoke',year:1585,lon:-75.65,lat:35.9},{name:'Jamestown: tobacco (1612)',year:1612,lon:-76.8,lat:37.2},{name:'Boston: maritime trade',year:1630,lon:-71.06,lat:42.36},{name:'Philadelphia: grain trade',year:1682,lon:-75.16,lat:39.95},{name:'Charles Town: rice',year:1690,lon:-79.93,lat:32.78},{name:'Savannah',year:1733,lon:-81.1,lat:32.08}];
+    const region = c => ['NH','MA','RI','CT'].includes(c.id)?0:['NY','NJ','PA','DE'].includes(c.id)?1:2;
+    const colors=['#2563eb','#15803d','#c65d16'];
+    const names=['New England','Middle','Southern'];
+    const products={NH:'Timber, fish, shipbuilding',MA:'Fish, ships, trade, crafts',RI:'Livestock, maritime trade, rum; merchants participated in the slave trade',CT:'Livestock, grain, coastal trade',NY:'Furs, wheat, flour, port trade',NJ:'Wheat, livestock, iron',PA:'Wheat, flour, iron, crafts',DE:'Grain, flour, timber',MD:'Tobacco, grain',VA:'Tobacco, later wheat and grain',NC:'Tobacco, timber, naval stores (tar and pitch)',SC:'Rice, indigo, deerskins',GA:'Rice, indigo, timber'};
+    const eras=[ [1585,'Early ventures','Roanoke was an English attempt to establish a base for trade and exploration. It did not become a permanent colony. Indigenous nations already farmed, hunted, fished and traded.',['No permanent English settlements','Indigenous trade networks','Roanoke venture']], [1607,'Survival and trade','Jamestown struggled to survive. Colonists sought profits and traded with Indigenous peoples, sometimes through coercion and conflict.',['No permanent English settlements yet','Indigenous trade networks','Subsistence and trade']], [1612,'Tobacco takes root','John Rolfe developed a marketable tobacco crop in Virginia. Demand for land and labor grew. Indentured servants and, increasingly, enslaved Africans supplied labor.',['Early settlements from 1620','Fur trade develops from the 1620s','Tobacco and subsistence']], [1630,'Regional specialization','New England developed fishing, timber and maritime trade alongside farming. Dutch New Netherland traded furs. Chesapeake tobacco expanded.',['Fishing, timber, farming','Furs, farming, port trade','Tobacco plantations']], [1650,'Growing colonial trade','Colonial ports grew as merchants traded fish, timber, grain and tobacco across the Atlantic. Some merchants also profited from the trade in enslaved people and goods produced by enslaved labor.',['Ships, fish, trade','Grain, furs, ports','Tobacco; growing racial slavery']], [1690,'Plantation expansion','Rice cultivation expanded in South Carolina in the late 1600s. Enslaved Africans contributed agricultural knowledge and were forced to labor on plantations. Grain exports grew in the Middle Colonies.',['Shipbuilding, fishing, trade','Wheat, flour, crafts','Tobacco, rice, naval stores']], [1733,'Thirteen colonies','Savannah was founded in 1733. Georgia initially restricted slavery; the ban ended around 1750–1751. Indigo became important in South Carolina during the 1740s.',['Maritime trade and manufacturing','Grain, iron, commerce','Tobacco, rice; later indigo']], [1751,'Mature colonial economies','All three regions participated in Atlantic trade and slavery. Southern plantation agriculture relied especially heavily on enslaved labor. Northern merchants also profited from slavery and slave-produced goods.',['Fish, ships, rum, trade','Wheat, flour, iron, ports','Tobacco, rice, indigo, timber']], [1776,'Independence','War disrupted Atlantic trade. Regional economic differences persisted, including the South’s dependence on plantation slavery. Slavery also continued in Northern colonies.',['Maritime trade and crafts','Grain and manufacturing','Plantation cash crops']]];
+    function detail(c){if(currentYear<c.founded)return 'Not yet established in this timeline. Indigenous peoples lived and traded here.'; if(currentYear<1630)return 'Early settlement, survival, farming and trade.'+(c.id==='VA'&&currentYear>=1612?' Tobacco becomes a commercial crop.':''); if(c.id==='SC'&&currentYear<1690)return 'Deerskin trade, livestock and early farming.'; if(c.id==='SC'&&currentYear<1740)return 'Rice, deerskins and plantation labor.'; if(c.id==='GA'&&currentYear<1751)return 'Early farming, timber and attempted silk production; slavery initially prohibited.'; return 'Characteristic products and activities: '+products[c.id]+'. These are broad historical patterns, not annual production figures.';}
+    function pointInPolygon(x, y, polyCoords, bounds) {
+      let inside = false;
+      for (let i = 0, j = polyCoords.length - 1; i < polyCoords.length; j = i++) {
+        const [xi, yi] = project(polyCoords[i][0], polyCoords[i][1], bounds);
+        const [xj, yj] = project(polyCoords[j][0], polyCoords[j][1], bounds);
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi + 1e-9) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function drawTextWithHalo(text, x, y, font, fillStyle, align = 'center') {
+      ctx.font = font;
+      ctx.textAlign = align;
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = 3.2;
+      ctx.strokeStyle = 'rgba(9, 19, 34, 0.88)';
+      ctx.strokeText(text, x, y);
+      ctx.fillStyle = fillStyle;
+      ctx.fillText(text, x, y);
+    }
+
+    function resizeCanvas() {
+      const rect = container.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawMap();
+    }
+
+    function drawPolygon(coords, bounds, fillStyle, strokeStyle, lineWidth = 1.2, lineDash = []) {
+      ctx.beginPath();
+      coords.forEach(([lon, lat], idx) => {
+        const [px, py] = project(lon, lat, bounds);
+        if (idx === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
+      if (fillStyle) {
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+      }
+      if (strokeStyle) {
+        ctx.setLineDash(lineDash);
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+
+
+    // Representative products, with approximate dates of commercial development.
+    const productMarkers = {
+      NH:[[-71.7,44.15],[[1623,'🐟'],[1640,'🪵'],[1670,'⛵']]],
+      MA:[[-72.0,42.25],[[1620,'🐟'],[1630,'🪵'],[1640,'⛵']]],
+      RI:[[-71.45,41.65],[[1640,'🐄'],[1700,'⛵']]],
+      CT:[[-72.65,41.55],[[1640,'🐄'],[1650,'🌾']]],
+      NY:[[-76.3,43.5],[[1624,'🦫'],[1650,'🌾']]],
+      NJ:[[-74.65,40.05],[[1664,'🌾'],[1670,'🐄'],[1710,'⚒️']]],
+      PA:[[-77.8,40.45],[[1681,'🌾'],[1720,'⚒️']]],
+      DE:[[-75.4,39.05],[[1640,'🌾'],[1650,'🪵']]],
+      MD:[[-77.4,39.35],[[1634,'🍃'],[1700,'🌾']]],
+      VA:[[-79.1,37.05],[[1612,'🍃'],[1700,'🌾']]],
+      NC:[[-79.1,35.15],[[1660,'🍃'],[1680,'🪵']]],
+      SC:[[-80.85,33.25],[[1670,'🦫'],[1690,'🍚'],[1740,'🔵']]],
+      GA:[[-83.0,31.65],[[1733,'🪵'],[1751,'🍚'],[1751,'🔵']]]
+    };
+    let showProducts = true;
+    document.getElementById('toggleProductsBtn').onclick = e => {
+      showProducts = !showProducts;
+      e.target.classList.toggle('active',showProducts);
+      e.target.textContent=(showProducts?'✓ ':'✕ ')+'Product icons'; drawMap();
+    };
+    function drawProducts(bounds) {
+      if(!showProducts)return;
+      for(const c of thirteenColonies){
+        if(currentYear<c.founded)continue;
+        const [pos, entries]=productMarkers[c.id];
+        const icons=entries.filter(([year])=>year<=currentYear).map(([,icon])=>icon);
+        if(!icons.length)continue;
+        const [x,y]=project(...pos,bounds);
+        const small=['RI','CT','NJ','DE','MD','MA','NH'].includes(c.id);
+        const size=zoom<1.5?12:16;
+        const callout=small && zoom<2;
+        const text=callout?icons.join(' '):icons.join(' ');
+        ctx.save();ctx.font=`${size}px "Noto Color Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.textAlign='center';ctx.textBaseline='middle';
+        let tx=x,ty=y;
+        if(callout){ const [lx,ly]=project(...c.labelPos,bounds); tx=lx+(c.leaderFrom?20:0);ty=ly+14;
+          ctx.strokeStyle='#cbd5e1';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(tx,ty);ctx.stroke(); }
+        const width=ctx.measureText(text).width+8;
+        ctx.fillStyle='rgba(8,17,32,.88)';ctx.fillRect(tx-width/2,ty-size/2-3,width,size+6);
+        ctx.fillStyle='#fff';ctx.fillText(text,tx,ty);ctx.restore();
+      }
+    }
+
+    function drawMap() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      const bounds = getMapBounds(w, h);
+
+      // Ocean background gradient
+      const oceanGrad = ctx.createLinearGradient(0, 0, w, h);
+      oceanGrad.addColorStop(0, '#091526');
+      oceanGrad.addColorStop(1, '#0d213d');
+      ctx.fillStyle = oceanGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Subtle Latitude/Longitude Graticule Lines
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+      ctx.lineWidth = 1;
+      for (let lon = -85; lon <= -65; lon += 5) {
+        const [x1, y1] = project(lon, GEO.minLat, bounds);
+        const [x2, y2] = project(lon, GEO.maxLat, bounds);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+      for (let lat = 30; lat <= 45; lat += 5) {
+        const [x1, y1] = project(GEO.minLon, lat, bounds);
+        const [x2, y2] = project(GEO.maxLon, lat, bounds);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      // Draw Surrounding North American Landmass
+      surroundingLandmass.forEach(poly => {
+        drawPolygon(poly, bounds, '#162338', '#263854', 1.2);
+      });
+
+      // Draw Great Lakes
+      greatLakesGeo.forEach(lake => {
+        drawPolygon(lake, bounds, '#0a182b', '#273c5c', 1.1);
+      });
+
+      // Draw Each of the 13 Colonies
+      thirteenColonies.forEach(colony => {
+        const isEstablished = currentYear >= colony.founded;
+        const isHovered = hoveredItem && hoveredItem.type === 'colony' && hoveredItem.data.id === colony.id;
+
+        let fillColor = isEstablished ? colors[region(colony)] : '#1c2b44';
+        if(isHovered && isEstablished) fillColor=['#60a5fa','#4ade80','#fb923c'][region(colony)];
+        const borderColor = showBorders
+          ? (isEstablished ? (isHovered ? '#fde68a' : 'rgba(251, 191, 36, 0.82)') : 'rgba(148, 163, 184, 0.38)')
+          : 'rgba(148, 163, 184, 0.15)';
+        const borderDash = showBorders ? (isEstablished ? [] : [3, 3]) : [];
+        const borderWidth = isHovered ? 2.4 : (isEstablished ? 1.5 : 1);
+
+        drawPolygon(colony.coords, bounds, fillColor, borderColor, borderWidth, borderDash);
+        if (colony.extraCoords) {
+          drawPolygon(colony.extraCoords, bounds, fillColor, borderColor, borderWidth, borderDash);
+        }
+      });
+
+        if (showLabels) {
+        thirteenColonies.forEach(colony => {
+          const isEstablished = currentYear >= colony.founded;
+          const [lx, ly] = project(colony.labelPos[0], colony.labelPos[1], bounds);
+          const font = isEstablished ? '700 11.5px sans-serif' : '600 10.5px sans-serif';
+          const color = isEstablished ? '#fef3c7' : '#cbd5e1';
+
+          if (colony.leaderFrom) {
+            const [fx, fy] = project(colony.leaderFrom[0], colony.leaderFrom[1], bounds);
+            ctx.beginPath();
+            ctx.moveTo(fx, fy);
+            ctx.lineTo(lx - 4, ly - 3);
+            ctx.strokeStyle = isEstablished ? 'rgba(253, 230, 138, 0.7)' : 'rgba(148, 163, 184, 0.55)';
+            ctx.lineWidth = 1.1;
+            ctx.stroke();
+            drawTextWithHalo(colony.shortName || colony.name, lx, ly, font, color, 'left');
+          } else {
+            drawTextWithHalo(colony.shortName || colony.name, lx, ly, font, color, 'center');
+          }
+
+          if (colony.secondLabelPos) {
+            const [lx2, ly2] = project(colony.secondLabelPos[0], colony.secondLabelPos[1], bounds);
+            drawTextWithHalo(colony.secondLabelText, lx2, ly2, font, color, 'center');
+          }
+        });
+      }
+
+      // Draw Historic Coastal Arrival / Port Sites
+      if (showSites) {
+        historicSites.forEach(site => {
+          if (currentYear >= site.year) {
+            const [sx, sy] = project(site.lon, site.lat, bounds);
+            const isKeySite = site.year === 1586 || site.year === 1619;
+
+            ctx.beginPath();
+            ctx.arc(sx, sy, isKeySite ? 5 : 4, 0, Math.PI * 2);
+            ctx.fillStyle = isKeySite ? '#f43f5e' : '#fef08a';
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.3;
+            ctx.stroke();
+
+            drawTextWithHalo(
+              site.name,
+              sx + 8,
+              sy + 4,
+              isKeySite ? '700 11px sans-serif' : '600 10.5px sans-serif',
+              isKeySite ? '#fda4af' : '#fef9c3',
+              'left'
+            );
+          }
+        });
+      }
+
+      if (showLabels) {
+        const [flx, fly] = project(-81.6, 27.1, bounds);
+        drawTextWithHalo(currentYear >= 1763 ? "British Florida" : "Spanish Florida", flx, fly, "600 10px sans-serif", "#cbd5e1");
+      }
+
+      drawProducts(bounds);
+
+      // Ocean Title Watermark
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.24)';
+      ctx.font = 'italic 700 14px Georgia, serif';
+      ctx.textAlign = 'center';
+      const [ax, ay] = project(-69.5, 33.2, bounds);
+      ctx.fillText('ATLANTIC OCEAN', ax, ay);
+    }
+
+    const select=document.getElementById('colSelect');
+    thirteenColonies.forEach(c=>select.add(new Option(c.name,c.id)));
+    select.onchange=()=>updateDashboard();
+    function updateDashboard(){
+      const e=eras.filter(e=>e[0]<=currentYear).at(-1);
+      yearSlider.value=currentYear;yearDisplay.textContent=currentYear;eraLabel.textContent=e[1];
+      document.getElementById('count').textContent=thirteenColonies.filter(c=>c.founded<=currentYear).length+' / 13';
+      document.getElementById('focus').textContent=e[1];document.getElementById('eraTitle').textContent=e[0]+' · '+e[1];document.getElementById('eraDesc').textContent=e[2];
+      document.getElementById('regionBarsContainer').innerHTML=names.map((n,i)=>`<div class="region-bars" style="margin-bottom:8px;border-left:4px solid ${colors[i]}"><h4>${n}</h4><p style="font-size:.82rem">${e[3][i]}</p></div>`).join('');
+      document.getElementById('colDetail').textContent=detail(thirteenColonies.find(c=>c.id===select.value)||thirteenColonies[0]);
+      document.querySelectorAll('.milestone-btn').forEach(b=>b.classList.toggle('active',+b.dataset.year===currentYear));tooltip.style.opacity='0';drawMap();
+    }
+    function animate(timestamp) {
+      if (!isPlaying) return;
+      if (timestamp - lastFrameTime > (140 / speedMultiplier)) {
+        lastFrameTime = timestamp;
+        if (currentYear < 1776) {
+          currentYear++;
+          updateDashboard();
+        } else {
+          isPlaying = false;
+          playPauseBtn.textContent = '▶ Replay Time-Lapse';
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    playPauseBtn.addEventListener('click', () => {
+      if (currentYear >= 1776) currentYear = 1585;
+      isPlaying = !isPlaying;
+      playPauseBtn.textContent = isPlaying ? '❚❚ Pause' : '▶ Play Time-Lapse';
+      if (isPlaying) {
+        lastFrameTime = performance.now();
+        requestAnimationFrame(animate);
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      isPlaying = false;
+      playPauseBtn.textContent = '▶ Play Time-Lapse';
+      currentYear = 1585;
+      updateDashboard();
+    });
+
+    speedBtn.addEventListener('click', () => {
+      speedMultiplier = speedMultiplier === 1 ? 2 : speedMultiplier === 2 ? 4 : 1;
+      speedBtn.textContent = `Speed: ${speedMultiplier}x`;
+    });
+
+    yearSlider.addEventListener('input', (e) => {
+      currentYear = Number(e.target.value);
+      updateDashboard();
+    });
+
+    document.querySelectorAll('.milestone-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        isPlaying = false;
+        playPauseBtn.textContent = '▶ Play Time-Lapse';
+        currentYear = Number(btn.dataset.year);
+        updateDashboard();
+      });
+    });
+
+    function handlePointer(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = clientX - rect.left;
+      const my = clientY - rect.top;
+      const bounds = getMapBounds(rect.width, rect.height);
+
+      for (const col of thirteenColonies) {
+        const inMain = pointInPolygon(mx, my, col.coords, bounds);
+        const inExtra = col.extraCoords ? pointInPolygon(mx, my, col.extraCoords, bounds) : false;
+        if (inMain || inExtra) {
+          hoveredItem = { type: 'colony', data: col };
+          tooltip.innerHTML=`<h4>${col.name} · ${currentYear}</h4><p>${names[region(col)]}</p><p>${detail(col)}</p>`;
+          tooltip.style.left = `${Math.min(rect.width - 140, Math.max(140, mx))}px`;
+          tooltip.style.top = `${Math.max(105, my - 10)}px`;
+          tooltip.style.opacity = '1';
+          drawMap();
+          return;
+        }
+      }
+
+      hoveredItem = null;
+      tooltip.style.opacity = '0';
+      drawMap();
+    }
+
+    const stage = document.querySelector('.map-stage');
+    const main = document.querySelector('main');
+    const fullButton = document.getElementById('fullView');
+    const statsButton = document.getElementById('statsView');
+    function refreshView() {
+      hoveredItem = null; tooltip.style.opacity = '0';
+      document.getElementById('zoomStatus').textContent = Math.round(zoom * 100) + '% · Drag to move';
+      document.getElementById('zoomIn').disabled = zoom >= 5;
+      document.getElementById('zoomOut').disabled = zoom <= 1;
+      drawMap();
+    }
+    function changeZoom(factor) {
+      const next = Math.max(1, Math.min(5, zoom * factor));
+      panX *= next / zoom; panY *= next / zoom; zoom = next;
+      if (zoom === 1) {panX = 0; panY = 0;}
+      refreshView();
+    }
+    document.getElementById('zoomIn').onclick = () => changeZoom(1.25);
+    document.getElementById('zoomOut').onclick = () => changeZoom(0.8);
+    document.getElementById('resetView').onclick = () => {zoom = 1; panX = panY = 0; refreshView();};
+    statsButton.onclick = () => {
+      const hidden = main.classList.toggle('hide-stats');
+      statsButton.textContent = hidden ? 'Show statistics' : 'Hide statistics';
+      statsButton.setAttribute('aria-expanded', String(!hidden));
+      requestAnimationFrame(resizeCanvas);
+    };
+    function syncFull() {
+      fullButton.textContent = document.fullscreenElement === stage || stage.classList.contains('expanded') ? 'Exit full screen' : '⛶ Full screen';
+      requestAnimationFrame(resizeCanvas);
+    }
+    fullButton.onclick = async () => {
+      if (document.fullscreenElement === stage) await document.exitFullscreen();
+      else if (stage.classList.contains('expanded')) stage.classList.remove('expanded');
+      else {try {if (!stage.requestFullscreen) throw Error(); await stage.requestFullscreen();} catch {stage.classList.add('expanded');}}
+      syncFull();
+    };
+    document.addEventListener('fullscreenchange', syncFull);
+    document.addEventListener('keydown', e => {if(e.key === 'Escape' && stage.classList.contains('expanded')) {stage.classList.remove('expanded'); syncFull();}});
+    let drag = null;
+    canvas.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      drag = {id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+      canvas.setPointerCapture(e.pointerId); canvas.classList.add('dragging');
+    });
+    canvas.addEventListener('pointermove', e => {
+      if (drag && drag.id === e.pointerId) {
+        const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+        if(dx || dy) {drag.moved=true; panX+=dx; panY+=dy; drag.x=e.clientX; drag.y=e.clientY; refreshView();}
+      } else if(e.pointerType==='mouse') handlePointer(e.clientX,e.clientY);
+    });
+    function endDrag(e) {
+      if(!drag || drag.id!==e.pointerId) return;
+      const moved=drag.moved; drag=null; canvas.classList.remove('dragging');
+      if(!moved && e.type==='pointerup') handlePointer(e.clientX,e.clientY);
+    }
+    canvas.addEventListener('pointerup',endDrag);
+    canvas.addEventListener('pointercancel',endDrag);
+    canvas.addEventListener('lostpointercapture',endDrag);
+    canvas.addEventListener('pointerleave', () => {if(!drag){hoveredItem=null; tooltip.style.opacity='0'; drawMap();}});
+    refreshView();
+
+    window.addEventListener('resize', resizeCanvas);
+    if (window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(container);
+    resizeCanvas();
+    updateDashboard();
+  </script>
+</body>
+</html>
